@@ -1,0 +1,19 @@
+source env/linux_runtime/config
+source env/distro.info
+source env/function.sh
+source env/linux_runtime/custom
+export STEP_BUILDNAME=linux_runtime
+export STEP_PACKAGENAME=libcddb
+export PACKAGE_VERSION=1.3.2
+export RESOURCEDIR=${NEW_TARGET_SYSDIR}/files/linux_runtime/libcddb/1.3.2/
+rm -rf ${BUILD_DIRECTORY}/libcddb-1.3.2
+tar xvf ${DOWNLOADDIR}/libcddb-1.3.2.tar.bz2 -C ${BUILD_DIRECTORY} 
+pushd ${BUILD_DIRECTORY}/libcddb-1.3.2
+	
+	if [ ! -f configure ]; then
+		autoreconf -ifv
+	fi
+	CFLAGS="${CFLAGS} -Wno-incompatible-pointer-types" ./configure ${COMMON_CONFIG} ac_cv_func_realloc_0_nonnull=yes ac_cv_func_malloc_0_nonnull=yes --enable-malloc0returnsnull
+	eval ${MAKE_AND_INSTALL}
+popd 
+rm -rf ${BUILD_DIRECTORY}/libcddb-1.3.2

@@ -1,0 +1,19 @@
+source env/linux_runtime/config
+source env/distro.info
+source env/function.sh
+source env/linux_runtime/custom
+export STEP_BUILDNAME=linux_runtime
+export STEP_PACKAGENAME=libsndfile
+export PACKAGE_VERSION=1.2.2
+export RESOURCEDIR=${NEW_TARGET_SYSDIR}/files/linux_runtime/libsndfile/1.2.2/
+rm -rf ${BUILD_DIRECTORY}/libsndfile-1.2.2
+tar xvf ${DOWNLOADDIR}/libsndfile-1.2.2.tar.xz -C ${BUILD_DIRECTORY} 
+pushd ${BUILD_DIRECTORY}/libsndfile-1.2.2
+	
+	if [ ! -f configure ]; then
+		autoreconf -ifv
+	fi
+	CFLAGS="${CFLAGS} -std=gnu17" ./configure ${COMMON_CONFIG}  --enable-malloc0returnsnull
+	eval ${MAKE_AND_INSTALL}
+popd 
+rm -rf ${BUILD_DIRECTORY}/libsndfile-1.2.2

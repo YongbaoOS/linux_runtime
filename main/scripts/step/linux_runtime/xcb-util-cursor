@@ -1,0 +1,19 @@
+source env/linux_runtime/config
+source env/distro.info
+source env/function.sh
+source env/linux_runtime/custom
+export STEP_BUILDNAME=linux_runtime
+export STEP_PACKAGENAME=xcb-util-cursor
+export PACKAGE_VERSION=0.1.6
+export RESOURCEDIR=${NEW_TARGET_SYSDIR}/files/linux_runtime/xcb-util-cursor/0.1.6/
+rm -rf ${BUILD_DIRECTORY}/xcb-util-cursor-0.1.6
+tar xvf ${DOWNLOADDIR}/xcb-util-cursor-0.1.6.tar.xz -C ${BUILD_DIRECTORY} 
+pushd ${BUILD_DIRECTORY}/xcb-util-cursor-0.1.6
+	
+	if [ ! -f configure ]; then
+		autoreconf -ifv
+	fi
+	 ./configure ${COMMON_CONFIG}  --enable-malloc0returnsnull
+	eval ${MAKE_AND_INSTALL}
+popd 
+rm -rf ${BUILD_DIRECTORY}/xcb-util-cursor-0.1.6

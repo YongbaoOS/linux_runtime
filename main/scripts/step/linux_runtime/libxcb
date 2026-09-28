@@ -1,0 +1,19 @@
+source env/linux_runtime/config
+source env/distro.info
+source env/function.sh
+source env/linux_runtime/custom
+export STEP_BUILDNAME=linux_runtime
+export STEP_PACKAGENAME=libxcb
+export PACKAGE_VERSION=1.17.0
+export RESOURCEDIR=${NEW_TARGET_SYSDIR}/files/linux_runtime/libxcb/1.17.0/
+rm -rf ${BUILD_DIRECTORY}/libxcb-1.17.0
+tar xvf ${DOWNLOADDIR}/libxcb-1.17.0.tar.xz -C ${BUILD_DIRECTORY} 
+pushd ${BUILD_DIRECTORY}/libxcb-1.17.0
+	
+	if [ ! -f configure ]; then
+		autoreconf -ifv
+	fi
+	 ./configure ${COMMON_CONFIG} PYTHON=python3 --enable-malloc0returnsnull
+	eval ${MAKE_AND_INSTALL}
+popd 
+rm -rf ${BUILD_DIRECTORY}/libxcb-1.17.0

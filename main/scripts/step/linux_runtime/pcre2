@@ -1,0 +1,19 @@
+source env/linux_runtime/config
+source env/distro.info
+source env/function.sh
+source env/linux_runtime/custom
+export STEP_BUILDNAME=linux_runtime
+export STEP_PACKAGENAME=pcre2
+export PACKAGE_VERSION=10.47
+export RESOURCEDIR=${NEW_TARGET_SYSDIR}/files/linux_runtime/pcre2/10.47/
+rm -rf ${BUILD_DIRECTORY}/pcre2-10.47
+tar xvf ${DOWNLOADDIR}/pcre2-10.47.tar.bz2 -C ${BUILD_DIRECTORY} 
+pushd ${BUILD_DIRECTORY}/pcre2-10.47
+	
+	if [ ! -f configure ]; then
+		autoreconf -ifv
+	fi
+	 ./configure ${COMMON_CONFIG} --enable-unicode --enable-pcre2-16 --enable-pcre2-32 --enable-pcre2grep-libz --enable-pcre2grep-libbz2 --enable-pcre2test-libreadline --enable-malloc0returnsnull
+	eval ${MAKE_AND_INSTALL}
+popd 
+rm -rf ${BUILD_DIRECTORY}/pcre2-10.47

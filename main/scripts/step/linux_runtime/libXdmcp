@@ -1,0 +1,19 @@
+source env/linux_runtime/config
+source env/distro.info
+source env/function.sh
+source env/linux_runtime/custom
+export STEP_BUILDNAME=linux_runtime
+export STEP_PACKAGENAME=libXdmcp
+export PACKAGE_VERSION=1.1.5
+export RESOURCEDIR=${NEW_TARGET_SYSDIR}/files/linux_runtime/libXdmcp/1.1.5/
+rm -rf ${BUILD_DIRECTORY}/libXdmcp-1.1.5
+tar xvf ${DOWNLOADDIR}/libXdmcp-1.1.5.tar.xz -C ${BUILD_DIRECTORY} 
+pushd ${BUILD_DIRECTORY}/libXdmcp-1.1.5
+	
+	if [ ! -f configure ]; then
+		autoreconf -ifv
+	fi
+	 ./configure ${COMMON_CONFIG}  --enable-malloc0returnsnull
+	eval ${MAKE_AND_INSTALL}
+popd 
+rm -rf ${BUILD_DIRECTORY}/libXdmcp-1.1.5

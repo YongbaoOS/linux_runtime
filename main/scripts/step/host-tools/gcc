@@ -1,0 +1,39 @@
+source env/host-tools/config
+source env/distro.info
+source env/function.sh
+export STEP_BUILDNAME=host-tools
+export STEP_PACKAGENAME=gcc
+export PACKAGE_VERSION=16.2.0
+export RESOURCEDIR=${NEW_TARGET_SYSDIR}/files/host-tools/gcc/16.2.0/
+rm -rf ${BUILD_DIRECTORY}/gcc-16.2.0
+tar xvf ${DOWNLOADDIR}/gcc-16.2.0.tar.xz -C ${BUILD_DIRECTORY} 
+pushd ${BUILD_DIRECTORY}/gcc-16.2.0
+	
+
+	export PATH=/usr/bin:/usr/sbin:/bin:/sbin
+
+	sed -i 's@\./fixinc\.sh@-c true@' gcc/Makefile.in
+	mkdir -pv build
+	pushd build
+		CC="/bin/gcc" CXX="/bin/g++" \
+		../configure --prefix=${PREFIX} \
+		             --enable-__cxa_atexit --enable-threads=posix \
+		             --with-system-zlib --enable-libstdcxx-time \
+		             --enable-checking=release \
+		             --disable-multilib \
+		             --enable-shared --disable-libunwind-exceptions --enable-gnu-unique-object --enable-linker-build-id --with-linker-hash-style=gnu --enable-plugin --enable-initfini-array \
+		             --enable-languages=c,c++,ada
+		make -j${JOBS}
+		make install-strip
+		ln -sfv gcc ${PREFIX}/bin/cc
+	popd
+	rm -fv ${PREFIX}/bin/$(${PREFIX}/bin/gcc -dumpmachine)-*
+	rm -fv $(dirname $(realpath $(${PREFIX}/bin/gcc -print-file-name=libssp.a)))/libssp*
+	${PREFIX}/bin/gcc -dumpspecs > specs
+	CUSTOM_LIB_PATH="${HOST_TOOLS_DIR}/lib64:${HOST_TOOLS_DIR}/lib"
+	sed -i "/^\*link:/,/^$/ { 
+/--build-id/ s|\(--build-id[^ ]*\)|\1 -rpath=${CUSTOM_LIB_PATH//\//\\/}|;
+}" specs
+	mv specs $(dirname $(${PREFIX}/bin/gcc -print-libgcc-file-name))/specs
+popd 
+rm -rf ${BUILD_DIRECTORY}/gcc-16.2.0

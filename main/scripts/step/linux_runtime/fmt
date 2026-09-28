@@ -1,0 +1,26 @@
+source env/linux_runtime/config
+source env/distro.info
+source env/function.sh
+source env/linux_runtime/custom
+export STEP_BUILDNAME=linux_runtime
+export STEP_PACKAGENAME=fmt
+export PACKAGE_VERSION=12.2.0
+export RESOURCEDIR=${NEW_TARGET_SYSDIR}/files/linux_runtime/fmt/12.2.0/
+rm -rf ${BUILD_DIRECTORY}/fmt-12.2.0
+tar xvf ${DOWNLOADDIR}/fmt-12.2.0.tar.gz -C ${BUILD_DIRECTORY} 
+pushd ${BUILD_DIRECTORY}/fmt-12.2.0
+        patch -Np1 -i ${SYSDIR}/files/linux_runtime/fmt/12.2.0/patches/588b3a0f8f6a8bcf2a959cae882d5b2703e86737.diff 
+	 
+	mkdir cross-build
+	pushd cross-build
+        	CC="${LINUX_HOST}-gcc" CXX="${LINUX_HOST}-g++" \
+		cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release \
+		      -DCMAKE_INSTALL_LIBDIR=/usr/lib${LIB_SUFF} \
+		      -DCMAKE_TOOLCHAIN_FILE=${COMMON_DIR}/cmake-cross-${TAG_NAME}.cmake \
+		      -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+       		      -DCMAKE_INSTALL_PREFIX=/usr -DFMT_TEST=false -Wno-dev ..
+		eval ${MAKE_AND_INSTALL}
+	popd
+        rm -f ${LINUX_SYSROOT_DIR}/usr/lib${LIB_SUFF}/*.la
+popd 
+rm -rf ${BUILD_DIRECTORY}/fmt-12.2.0

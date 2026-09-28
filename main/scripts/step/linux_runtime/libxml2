@@ -1,0 +1,19 @@
+source env/linux_runtime/config
+source env/distro.info
+source env/function.sh
+source env/linux_runtime/custom
+export STEP_BUILDNAME=linux_runtime
+export STEP_PACKAGENAME=libxml2
+export PACKAGE_VERSION=2.15.3
+export RESOURCEDIR=${NEW_TARGET_SYSDIR}/files/linux_runtime/libxml2/2.15.3/
+rm -rf ${BUILD_DIRECTORY}/libxml2-2.15.3
+tar xvf ${DOWNLOADDIR}/libxml2-2.15.3.tar.xz -C ${BUILD_DIRECTORY} 
+pushd ${BUILD_DIRECTORY}/libxml2-2.15.3
+	
+	if [ ! -f configure ]; then
+		autoreconf -ifv
+	fi
+	 ./configure ${COMMON_CONFIG} --with-history --without-icu --without-python --enable-malloc0returnsnull
+	eval ${MAKE_AND_INSTALL}
+popd 
+rm -rf ${BUILD_DIRECTORY}/libxml2-2.15.3

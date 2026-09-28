@@ -1,0 +1,41 @@
+source env/linux_runtime/config
+source env/distro.info
+source env/function.sh
+source env/linux_runtime/custom
+export STEP_BUILDNAME=linux_runtime
+export STEP_PACKAGENAME=shaderc
+export PACKAGE_VERSION=2026.3
+export RESOURCEDIR=${NEW_TARGET_SYSDIR}/files/linux_runtime/shaderc/2026.3/
+rm -rf ${BUILD_DIRECTORY}/shaderc-2026.3
+tar xvf ${DOWNLOADDIR}/shaderc-2026.3.tar.gz -C ${BUILD_DIRECTORY} 
+pushd ${BUILD_DIRECTORY}/shaderc-2026.3
+	tar xvf ${DOWNLOADDIR}/SPIRV-Tools-$(get_package_version "${LINUX_HOST}_SPIRV-Tools").tar.gz -C third_party/
+	mv third_party/SPIRV-Tools-$(get_package_version "${LINUX_HOST}_SPIRV-Tools") third_party/spirv-tools
+	
+	tar xvf ${DOWNLOADDIR}/glslang-$(get_package_version "${LINUX_HOST}_glslang").tar.gz -C third_party/
+	mv third_party/glslang-$(get_package_version "${LINUX_HOST}_glslang") third_party/glslang
+
+
+	tar xvf ${DOWNLOADDIR}/SPIRV-Headers-$(get_package_version "${LINUX_HOST}_SPIRV-Headers").tar.gz -C third_party/spirv-tools/external/
+	mv third_party/spirv-tools/external/SPIRV-Headers-$(get_package_version "${LINUX_HOST}_SPIRV-Headers") third_party/spirv-tools/external/spirv-headers
+
+
+        
+        mkdir cross-build
+        pushd cross-build
+                CC="${LINUX_HOST}-gcc" CXX="${LINUX_HOST}-g++" \
+                cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release \
+                      -DCMAKE_INSTALL_LIBDIR=/usr/lib${LIB_SUFF} \
+                      -DCMAKE_TOOLCHAIN_FILE=${COMMON_DIR}/cmake-cross-${TAG_NAME}.cmake \
+		      -DSKIP_GLSLANG_INSTALL=ON -DSKIP_SPIRV_TOOLS_INSTALL=ON -DSKIP_GOOGLETEST_INSTALL=ON \
+                      -DCMAKE_INSTALL_PREFIX=/usr -DSHADERC_SKIP_TESTS=ON -Wno-dev ..
+                eval ${MAKE_AND_INSTALL}
+        popd
+        rm -f ${LINUX_SYSROOT_DIR}/usr/lib${LIB_SUFF}/*.la
+popd 
+rm -rf ${BUILD_DIRECTORY}/shaderc-2026.3
+
+echo "#!/bin/bash -e
+qemu-${QEMU_ARCH} ${LINUX_SYSROOT_DIR}/usr/bin/glslc \"\$@\"" \
+                > ${CROSS_TOOLS_PREFIX}/bin/glslc
+chmod +x ${CROSS_TOOLS_PREFIX}/bin/glslc

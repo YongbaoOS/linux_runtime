@@ -1,0 +1,50 @@
+source env/linux_runtime/config
+source env/distro.info
+source env/function.sh
+source env/linux_runtime/custom
+export STEP_BUILDNAME=linux_runtime
+export STEP_PACKAGENAME=tcl
+export PACKAGE_VERSION=8.6.13
+export RESOURCEDIR=${NEW_TARGET_SYSDIR}/files/linux_runtime/tcl/8.6.13/
+rm -rf ${BUILD_DIRECTORY}/tcl8.6.13
+tar xvf ${DOWNLOADDIR}/tcl8.6.13-src.tar.gz -C ${BUILD_DIRECTORY} 
+pushd ${BUILD_DIRECTORY}/tcl8.6.13
+    TCL_VERSION="${PACKAGE_VERSION%\.*}"
+    SRCDIR=$(pwd)
+    pushd unix
+	    ./configure --prefix=/usr --libdir=/usr/lib${LIB_SUFF} --mandir=/usr/share/man \
+                        --build=${CROSS_HOST} --host=${LINUX_HOST} \
+	                --enable-64bit
+	    check_gnu_Makefile
+	    make -j${JOBS} TCLSH_PROG=${HOST_TOOLS_DIR}/bin/tclsh
+	    TDBC_VERSION=$(ls pkgs/ | grep -o "tdbc[[:digit:]]\([[:digit:]|\.]*\)" | sed "s@tdbc@@")
+	    ITCL_VERSION=$(ls pkgs/ | grep -o "itcl[[:digit:]]\([[:digit:]|\.]*\)" | sed "s@itcl@@")
+	    sed -i -e "s|$SRCDIR/unix|${LINUX_SYSROOT_DIR}/usr/lib${LIB_SUFF}|" \
+	           -e "s|$SRCDIR|${LINUX_SYSROOT_DIR}/usr/include|" \
+	           -e "/TCL_INCLUDE_SPEC/s|/usr/include|${LINUX_SYSROOT_DIR}/usr/include|" \
+		   -e "/TCL_STUB_LIB_SPEC/s|/usr/lib|${LINUX_SYSROOT_DIR}/usr/lib|" \
+                   -e "/TCL_LIB_SPEC/s|/usr/lib|${LINUX_SYSROOT_DIR}/usr/lib|" \
+	           tclConfig.sh
+	    sed -i -e "s|$SRCDIR/unix/pkgs/tdbc${TDBC_VERSION}|${LINUX_SYSROOT_DIR}/usr/lib${LIB_SUFF}/tdbc${TDBC_VERSION}|" \
+               -e "s|$SRCDIR/pkgs/tdbc${TDBC_VERSION}/generic|${LINUX_SYSROOT_DIR}/usr/include|"    \
+               -e "s|$SRCDIR/pkgs/tdbc${TDBC_VERSION}/library|${LINUX_SYSROOT_DIR}/usr/lib${LIB_SUFF}/tcl${TCL_VERSION}|" \
+               -e "s|$SRCDIR/pkgs/tdbc${TDBC_VERSION}|${LINUX_SYSROOT_DIR}/usr/include|"            \
+               pkgs/tdbc${TDBC_VERSION}/tdbcConfig.sh
+	    sed -i -e "s|$SRCDIR/unix/pkgs/itcl${ITCL_VERSION}|${LINUX_SYSROOT_DIR}/usr/lib${LIB_SUFF}/itcl${ITCL_VERSION}|" \
+               -e "s|$SRCDIR/pkgs/itcl${ITCL_VERSION}/generic|${LINUX_SYSROOT_DIR}/usr/include|"    \
+               -e "s|$SRCDIR/pkgs/itcl${ITCL_VERSION}|${LINUX_SYSROOT_DIR}/usr/include|"            \
+               pkgs/itcl${ITCL_VERSION}/itclConfig.sh
+	    unset SRCDIR
+	    make DESTDIR=${LINUX_SYSROOT_DIR} install
+	    make DESTDIR=${LINUX_SYSROOT_DIR} install-private-headers
+	    ln -sfv tclsh${TCL_VERSION} ${LINUX_SYSROOT_DIR}/usr/bin/tclsh
+	    chmod u+w ${LINUX_SYSROOT_DIR}/usr/lib${LIB_SUFF}/libtcl*.so
+    popd
+popd 
+rm -rf ${BUILD_DIRECTORY}/tcl8.6.13
+
+cat > ${CROSS_TOOLS_PREFIX}/bin/${LINUX_HOST}-tclsh << EOF
+#!/bin/bash -e
+qemu-${QEMU_ARCH} ${LINUX_SYSROOT_DIR}/usr/bin/tclsh "\$@"
+EOF
+chmod +x ${CROSS_TOOLS_PREFIX}/bin/${LINUX_HOST}-tclsh

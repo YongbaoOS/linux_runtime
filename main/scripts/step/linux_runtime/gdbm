@@ -1,0 +1,19 @@
+source env/linux_runtime/config
+source env/distro.info
+source env/function.sh
+source env/linux_runtime/custom
+export STEP_BUILDNAME=linux_runtime
+export STEP_PACKAGENAME=gdbm
+export PACKAGE_VERSION=1.26
+export RESOURCEDIR=${NEW_TARGET_SYSDIR}/files/linux_runtime/gdbm/1.26/
+rm -rf ${BUILD_DIRECTORY}/gdbm-1.26
+tar xvf ${DOWNLOADDIR}/gdbm-1.26.tar.gz -C ${BUILD_DIRECTORY} 
+pushd ${BUILD_DIRECTORY}/gdbm-1.26
+	
+	if [ ! -f configure ]; then
+		autoreconf -ifv
+	fi
+	 ./configure ${COMMON_CONFIG} --disable-static --enable-libgdbm-compat --enable-malloc0returnsnull
+	eval ${MAKE_AND_INSTALL}
+popd 
+rm -rf ${BUILD_DIRECTORY}/gdbm-1.26

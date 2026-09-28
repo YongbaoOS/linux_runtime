@@ -1,0 +1,48 @@
+source env/cross-toolchains/config
+source env/distro.info
+source env/function.sh
+source env/cross-toolchains/custom
+export STEP_BUILDNAME=cross-toolchains
+export STEP_PACKAGENAME=linux-gcc
+export PACKAGE_VERSION=16.2.0
+export RESOURCEDIR=${NEW_TARGET_SYSDIR}/files/cross-toolchains/linux-gcc/16.2.0/
+rm -rf ${BUILD_DIRECTORY}/gcc-16.2.0
+tar xvf ${DOWNLOADDIR}/gcc-16.2.0.tar.xz -C ${BUILD_DIRECTORY} 
+pushd ${BUILD_DIRECTORY}/gcc-16.2.0
+	case "${ARCH_NAME}" in
+		"loongarch64")
+			ABI_STRING="--with-abi=lp64"
+			;;
+		"i686")
+			ABI_STRING=""
+			;;
+		"x86_64")
+			ABI_STRING="--with-abi=${ARCH_ABI} --with-tune=generic"
+			;;
+		"aarch64")
+			ABI_STRING="--with-abi=lp64"
+			;;
+		*)
+			ABI_STRING="--with-abi=${ARCH_ABI}"
+			;;
+	esac
+	mkdir -p tools-build
+	pushd tools-build
+		AR=ar \
+		../configure --prefix=${PREFIX}/${LINUX_HOST} --build=${CROSS_HOST} --host=${CROSS_HOST} \
+		             --target=${LINUX_HOST} --disable-nls \
+		             --with-mpfr=${CROSSTOOLS_DIR} --with-gmp=${CROSSTOOLS_DIR} \
+		             --with-mpc=${CROSSTOOLS_DIR} \
+		             --with-newlib --disable-shared \
+		             --enable-default-pie --disable-multilib ${ABI_STRING} \
+		             --with-sysroot=${SYSROOT_DIR}${RUNTIME_SYSROOT_DIR} \
+		             --disable-decimal-float --disable-libgomp --disable-libitm \
+		             --disable-libsanitizer --disable-libquadmath --disable-threads \
+		             --disable-target-zlib --with-system-zlib --enable-checking=release \
+			     --enable-linker-build-id --with-linker-hash-style=gnu --enable-gnu-unique-object --enable-initfini-array --enable-gnu-indirect-function \
+		             --enable-languages=c
+		make -j${JOBS} all-gcc all-target-libgcc
+		make install-strip-gcc install-strip-target-libgcc
+	popd
+popd 
+rm -rf ${BUILD_DIRECTORY}/gcc-16.2.0

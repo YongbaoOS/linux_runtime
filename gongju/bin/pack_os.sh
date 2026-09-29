@@ -231,13 +231,13 @@ if [ "x${OVERLAY_NAME_ALL}" == "x" ]; then
         			fi
 			else
 				if [ "x${SKIP_MISS_KERNEL}" == "xFALSE" ]; then
-					echo "没有发现构建内核版本的信息，无法打包内核，请确认是否完成内核的编译。"
+					echo "没有发现构建内核版本的信息，无法打包内核，请确认是否完成内核的编译，或使用 -s 参数跳过内核打包。"
 					exit 7
 				fi
 			fi
 		else
 			if [ "x${SKIP_MISS_KERNEL}" == "xFALSE" ]; then
-				echo "没有发现构建内核版本的信息，无法打包内核，请确认是否完成内核的编译。"
+				echo "没有发现构建内核版本的信息，无法打包内核，请确认是否完成内核的编译，或使用 -s 参数跳过内核打包。"
 				exit 7
 			fi
 		fi

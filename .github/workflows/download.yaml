@@ -1,0 +1,60 @@
+name: Download Packages
+
+on:
+  # 允许被其他 workflow 调用，并对外暴露 cache-key
+  workflow_call:
+    outputs:
+      cache-key:
+        description: 'host-tools 缓存 key'
+        value: ${{ jobs.download_packages.outputs.cache-key }}
+
+  # 支持手动触发（用于预热缓存）
+  workflow_dispatch:
+
+  # 当构建脚本/描述文件变化时自动触发，提前刷新缓存
+  push:
+    paths:
+      - 'main/build-stamp'
+      - '.github/workflows/download.yml'
+    branches-ignore:
+      - 'dependabot/**'
+
+jobs:
+  download_packages:
+    runs-on: ubuntu-latest
+    outputs:
+      cache-key: ${{ steps.cache-key.outputs.key }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # 关键：cache-key 基于源文件哈希，保证调用方与提供方一致
+      - name: Generate cache key
+        id: cache-key
+        run: |
+          echo "key=download_packages-${{ hashFiles('./main/build-stamp') }}" >> "$GITHUB_OUTPUT"
+
+      - name: Restore download_packages cache
+        id: cache-download_packages
+        uses: actions/cache@v4
+        with:
+          path: ./download_packages-cache
+          key: ${{ steps.cache-key.outputs.key }}
+
+      - name: Download Packages
+#         if: steps.cache-download_packages.outputs.cache-hit != 'true'
+        run: |
+          docker buildx build \
+            --target download_packages-out \
+            --output type=local,dest=./download_packages-cache \
+            --cache-from type=gha,scope=download_packages \
+            --cache-to type=gha,mode=max,scope=download_packages \
+            .
+
+      - name: Verify cache output
+        run: |
+          echo "download packages cache contents:"
+          find ./download_packages-cache | head -100

@@ -57,8 +57,9 @@ declare SET_CROSSTOOLS_DIR=""
 declare CROSSTOOLS_DIR_EXT=""
 declare BUILD_ERROR_LIMITE=1
 declare BUILD_ERROR_COUNT=1
+declare SHOW_ERROR_LOG=0
 
-while getopts 'fao:rgsP:de:xi:S:O:C:K:tpwch' OPT; do
+while getopts 'fao:rgsP:de:xi:S:O:C:K:tpwclh' OPT; do
     case $OPT in
         f)
             FORCE_BUILD=1
@@ -157,6 +158,9 @@ while getopts 'fao:rgsP:de:xi:S:O:C:K:tpwch' OPT; do
 	c)
 	    USE_PREV_INDEX_FILE=1
 	    ;;
+	l)
+	    SHOW_ERROR_LOG=1
+	    ;;
         h|?)
             echo "目标系统构建命令。"
             echo ""
@@ -191,6 +195,7 @@ while getopts 'fao:rgsP:de:xi:S:O:C:K:tpwch' OPT; do
 	    echo "        错误数: 0，不设上限，表示无论多少错误数都不会停止构建过程，直到构建完成为止，构建结束后打印错误步骤。"
 	    echo "        错误数: 1，出现错误步骤即立刻停止构建过程，显示相关的信息。"
 	    echo "        错误数: 2以上，指定错误步骤的上限，达到该限制时将立刻停止构建过程，并显示所有错误步骤。"
+	    echo "    -l: 显示错误日志内容，仅当错误数(-K)指定为 1 或不指定时有效。"
             exit 127
     esac
 done
@@ -2649,9 +2654,16 @@ do
 				tools/show_package_script.sh ${WORLD_PARM} ${SCRIPT_FILE}
 				echo -e "${SCRIPT_FILE}  $([[ "${REBUILD_ENV}" == "" ]] && echo "$([[ "${SHOW_PACKAGE_OPT}" == "" ]] && echo "" || echo " $(echo "${SHOW_PACKAGE_OPT}" | sed "s@ @,@g")")" || echo " ${REBUILD_ENV}")$([[ "${SET_CROSSTOOLS_DIR}" == "" ]] && echo "" || echo " 指定交叉工具链目录: ${SET_CROSSTOOLS_DIR}")$([[ "${OPT_SET_PARENT_DIR}" == "" ]] && echo "" || echo " 指定上级挂载目录: ${OPT_SET_PARENT_DIR}")$([[ "${SET_OVERLAY_DIR}" == "" ]] && echo "$([[ "${OPT_SET_OVERLAY_DIR}" == "" ]] && echo "" || echo " 指定安装目录: ${OPT_SET_OVERLAY_DIR}")" || echo " 指定安装目录: ${SET_OVERLAY_DIR}") \e[31m制作错误!\e[0m"
 				echo -e "错误日志请查看 \e[31m ${NEW_TARGET_SYSDIR}/logs/${STATUS_LOG_FILE}.log \e[0m 文件。"
-				REBUILD_ENV=$(format_package_env_to_string)
-				echo -e "进入构建环境进行调试使用命令： \e[32m tools/enter_package_env.sh ${WORLD_PARM}$([[ "${REBUILD_ENV}" == "" ]] && echo "$([[ "${SHOW_PACKAGE_OPT}" == "" ]] && echo "" || echo " -e $(echo "${SHOW_PACKAGE_OPT}" | sed "s@ @,@g")")" || echo " -e ${REBUILD_ENV}")$([[ "${SET_CROSSTOOLS_DIR}" == "" ]] && echo "" || echo " -C ${SET_CROSSTOOLS_DIR}")$([[ "${SET_PARENT_DIR}" == "" ]] && echo "$([[ "${OPT_SET_PARENT_DIR}" == "" ]] && echo "" || echo " -O ${OPT_SET_PARENT_DIR}")" || echo " -O ${SET_PARENT_DIR}")$([[ "${SET_OVERLAY_DIR}" == "" ]] && echo "$([[ "${OPT_SET_OVERLAY_DIR}" == "" ]] && echo "" || echo " -S ${OPT_SET_OVERLAY_DIR}")" || echo " -S ${SET_OVERLAY_DIR}") ${STEP_STAGE}/${PACKAGE_NAME} \e[0m"
-				exit 1
+				if [ "x${SHOW_ERROR_LOG}" == "x1" ]; then
+					echo "-------------错误日志------------------"
+					cat ${NEW_TARGET_SYSDIR}/logs/${STATUS_LOG_FILE}.log | tail -n300
+					echo "----------------------------------------"
+					exit 0
+				else
+					REBUILD_ENV=$(format_package_env_to_string)
+					echo -e "进入构建环境进行调试使用命令： \e[32m tools/enter_package_env.sh ${WORLD_PARM}$([[ "${REBUILD_ENV}" == "" ]] && echo "$([[ "${SHOW_PACKAGE_OPT}" == "" ]] && echo "" || echo " -e $(echo "${SHOW_PACKAGE_OPT}" | sed "s@ @,@g")")" || echo " -e ${REBUILD_ENV}")$([[ "${SET_CROSSTOOLS_DIR}" == "" ]] && echo "" || echo " -C ${SET_CROSSTOOLS_DIR}")$([[ "${SET_PARENT_DIR}" == "" ]] && echo "$([[ "${OPT_SET_PARENT_DIR}" == "" ]] && echo "" || echo " -O ${OPT_SET_PARENT_DIR}")" || echo " -O ${SET_PARENT_DIR}")$([[ "${SET_OVERLAY_DIR}" == "" ]] && echo "$([[ "${OPT_SET_OVERLAY_DIR}" == "" ]] && echo "" || echo " -S ${OPT_SET_OVERLAY_DIR}")" || echo " -S ${SET_OVERLAY_DIR}") ${STEP_STAGE}/${PACKAGE_NAME} \e[0m"
+					exit 1
+				fi
 				;;
 			*)
 				((BUILD_ERROR_COUNT--))

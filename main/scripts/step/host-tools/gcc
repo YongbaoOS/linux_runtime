@@ -22,7 +22,7 @@ pushd ${BUILD_DIRECTORY}/gcc-16.2.0
 		             --enable-checking=release \
 		             --disable-multilib \
 		             --enable-shared --disable-libunwind-exceptions --enable-gnu-unique-object --enable-linker-build-id --with-linker-hash-style=gnu --enable-plugin --enable-initfini-array \
-		             --enable-languages=c,c++,ada
+		             --enable-languages=c,c++
 		make -j${JOBS}
 		make install-strip
 		ln -sfv gcc ${PREFIX}/bin/cc

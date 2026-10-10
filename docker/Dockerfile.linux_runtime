@@ -23,6 +23,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         sudo \
         zlib1g-dev \
         libgmp-dev libmpfr-dev libmpc-dev \
+        libglib2.0-dev \
         flex bison \
         git \
         curl \
@@ -52,9 +53,9 @@ RUN --security=insecure chmod +x ./main/build.sh \
 # linux runtime 产物统一收集到 /output/linux_runtime
 RUN mkdir -p /output/linux_runtime/status/ \
     && cp -a ./main/workbase/overlaydir/${ARCH}_runtime /output/linux_runtime/ \
-    && cp -a ./main/workbase/cross-toolchain /output/linux_runtime/ \
+    && cp -a ./main/workbase/cross-toolchains /output/linux_runtime/ \
     && cp -a ./main/workbase/status/linux_runtime /output/linux_runtime/status/ \
-    && cp -a ./main/workbase/status/cross-toolchain /output/linux_runtime/status/
+    && cp -a ./main/workbase/status/cross-toolchains /output/linux_runtime/status/
 
 FROM scratch AS linux_runtime-builder
 COPY --from=linux_runtime /output/linux_runtime/. /

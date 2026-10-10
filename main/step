@@ -20,6 +20,7 @@
 %step/host-tools/MarkupSafe|
 %step/host-tools/Jinja2|
 %step/host-tools/meson|
+%step/host-tools/ninja|
 %step/host-tools/Mako|
 %step/host-tools/packaging|
 %step/host-tools/python-zstandard|
@@ -31,7 +32,6 @@
 %step/host-tools/icu4c|
 %step/host-tools/wayland|
 %step/host-tools/cmake|
-%step/host-tools/ninja|
 %step/host-tools/glslang|
 %step/bootstrap/rust-bootstrap|
 %step/host-tools/rustc|

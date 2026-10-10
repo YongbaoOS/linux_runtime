@@ -1,0 +1,59 @@
+# syntax=docker/dockerfile:1-labs
+
+ARG BASE_IMAGE=ubuntu:22.04
+
+# ============================================================
+# Stage 2: linux runtime 构建阶段
+# 执行 ./build.sh ，生成目标架构的runtime
+# ============================================================
+FROM ${BASE_IMAGE} AS linux_runtime
+ARG ARCH=x86_64
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        ca-certificates \
+        locales \
+        gettext-base \
+        autoconf \
+        gawk \
+        kmod \
+        fuse-overlayfs \
+        sudo \
+        libgmp-dev libmpfr-dev libmpc-dev \
+        flex bison \
+        git \
+        curl \
+        wget \
+        python3 \
+        pkg-config \
+        && locale-gen zh_CN.UTF-8 \
+        && rm -rf /var/lib/apt/lists/*
+
+#         xz-utils zstd gzip unzip
+
+WORKDIR /src
+COPY . .
+RUN mkdir -pv ./host-tools-cache/host-tools ./host-tools-cache/host-tools/status ./linux_runtime_${ARCH}-cache/${ARCH}_runtime ./linux_runtime_${ARCH}-cache/cross-toolchains ./linux_runtime_${ARCH}-cache/status \
+    && mkdir -p ./main/downloads ./main/workbase/overlaydir \
+    && mv ./download_packages-cache/* ./main/downloads/ \
+    && mv ./host-tools-cache/host-tools ./main/workbase/ \
+    && mv ./host-tools-cache/status ./main/workbase/ \
+    && mv ./linux_runtime_${ARCH}-cache/${ARCH}_runtime ./main/workbase/overlaydir/ \
+    && mv ./linux_runtime_${ARCH}-cache/cross-toolchains ./main/workbase/ \
+    && mv ./linux_runtime_${ARCH}-cache/status/. ./main/workbase/status/ || true
+
+RUN --security=insecure chmod +x ./main/build.sh \
+    && cd ./main \
+    && ./build.sh -l -e target=${ARCH} -S ${ARCH}_runtime
+
+# linux runtime 产物统一收集到 /output/linux_runtime
+RUN mkdir -p /output/linux_runtime/status/ \
+    && cp -a ./main/workbase/overlaydir/${ARCH}_runtime /output/linux_runtime/ \
+    && cp -a ./main/workbase/cross-toolchain /output/linux_runtime/ \
+    && cp -a ./main/workbase/status/linux_runtime /output/linux_runtime/status/ \
+    && cp -a ./main/workbase/status/cross-toolchain /output/linux_runtime/status/
+
+FROM scratch AS linux_runtime-builder
+COPY --from=linux_runtime /output/linux_runtime/. /

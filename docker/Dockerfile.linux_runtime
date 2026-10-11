@@ -40,15 +40,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /src
 COPY . .
-RUN mkdir -pv ./host-tools-cache/host-tools ./host-tools-cache/host-tools/status ./linux_runtime_${ARCH}-cache/${ARCH}_runtime ./linux_runtime_${ARCH}-cache/cross-toolchains ./linux_runtime_${ARCH}-cache/status \
-    && mkdir -p ./main/downloads ./main/workbase/overlaydir ./main/workbase/status/ \
+RUN mkdir -pv ./host-tools-cache/host-tools ./host-tools-cache/host-tools/status ./linux_runtime_${ARCH}-cache/${ARCH}_runtime ./linux_runtime_${ARCH}-cache/cross-toolchains ./linux_runtime_${ARCH}-cache/status ./linux_runtime_${ARCH}-cache/common_files \
+    && mkdir -p ./main/downloads ./main/workbase/overlaydir ./main/workbase/status/ ./main/workbase/common_files \
     && mv ./download_packages-cache/* ./main/downloads/ \
     && mv ./host-tools-cache/host-tools ./main/workbase/ \
     && cp -a ./host-tools-cache/status/. ./main/workbase/status/ \
     && mv ./linux_runtime_${ARCH}-cache/${ARCH}_runtime ./main/workbase/overlaydir/ \
     && mv ./linux_runtime_${ARCH}-cache/cross-toolchains ./main/workbase/ \
     && cp -a ./linux_runtime_${ARCH}-cache/status/. ./main/workbase/status/ \
-    && rm ./main/workbse/status/linux_runtime/make_directory_*
+    && cp -a ./linux_runtime_${ARCH}-cache/common_files/. ./main/workbase/common_files/ \
+    && rm ./main/workbase/status/linux_runtime/make_directory_*
 
 RUN --security=insecure chmod +x ./main/build.sh \
     && cd ./main \
@@ -59,7 +60,8 @@ RUN mkdir -p /output/linux_runtime/status/ \
     && cp -a ./main/workbase/overlaydir/${ARCH}_runtime /output/linux_runtime/ \
     && cp -a ./main/workbase/cross-toolchains /output/linux_runtime/ \
     && cp -a ./main/workbase/status/linux_runtime /output/linux_runtime/status/ \
-    && cp -a ./main/workbase/status/cross-toolchains /output/linux_runtime/status/
+    && cp -a ./main/workbase/status/cross-toolchains /output/linux_runtime/status/ \
+    && cp -a ./main/workbase/common_files /output/linux_runtime/
 
 FROM scratch AS linux_runtime-builder
 COPY --from=linux_runtime /output/linux_runtime/. /
